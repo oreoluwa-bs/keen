@@ -45,18 +45,19 @@ func resize(src image.Image, width, height int) image.Image {
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
 
-	if width == 0 && height == 0 {
+	if srcW <= 0 || srcH <= 0 || (width <= 0 && height <= 0) {
 		return src
 	}
 
+	// Preserve aspect ratio using floating-point math to avoid truncation/overflow
 	if width == 0 {
-		width = srcW * height / srcH
+		width = int(float64(srcW) * float64(height) / float64(srcH))
 	}
 	if height == 0 {
-		height = srcH * width / srcW
+		height = int(float64(srcH) * float64(width) / float64(srcW))
 	}
 
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.ApproxBiLinear.Scale(dst, dst.Rect, src, bounds, draw.Src, nil)
+	draw.ApproxBiLinear.Scale(dst, dst.Rect, src, bounds, draw.Over, nil)
 	return dst
 }
