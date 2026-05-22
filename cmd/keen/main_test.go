@@ -88,11 +88,10 @@ func TestConvertLosslessQualityWarning(t *testing.T) {
 	}
 }
 
-func TestConvertBatch(t *testing.T) {
+func TestBatchDir(t *testing.T) {
 	srcDir := t.TempDir()
 	dstDir := t.TempDir()
 
-	// Copy fixture files to temp src dir — different base names to avoid collisions
 	fixtures := map[string]string{"a.png": "fixture.png", "b.webp": "fixture.webp"}
 	for dstName, srcName := range fixtures {
 		data, err := os.ReadFile("../../testdata/input/" + srcName)
@@ -104,10 +103,10 @@ func TestConvertBatch(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command(binary, "convert", srcDir, dstDir, "--format", "png")
+	cmd := exec.Command(binary, "batch", srcDir, dstDir, "--format", "png", "--workers", "2")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Fatalf("batch convert failed: %v\n%s", err, out)
+		t.Fatalf("batch failed: %v\n%s", err, out)
 	}
 
 	entries, err := os.ReadDir(dstDir)
@@ -119,11 +118,30 @@ func TestConvertBatch(t *testing.T) {
 	}
 }
 
-func TestConvertBatchRequiresFormat(t *testing.T) {
+func TestBatchRequiresFormat(t *testing.T) {
 	srcDir := t.TempDir()
-	cmd := exec.Command(binary, "convert", srcDir, "../../testdata/output")
+	cmd := exec.Command(binary, "batch", srcDir, "../../testdata/output")
 	if err := cmd.Run(); err == nil {
-		t.Fatal("expected error when --format is missing for directory")
+		t.Fatal("expected error when --format is missing")
+	}
+}
+
+func TestBatchSkipsUnknownExt(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	fh, _ := os.Create(filepath.Join(srcDir, "readme.txt"))
+	fh.Close()
+
+	cmd := exec.Command(binary, "batch", srcDir, dstDir, "--format", "jpeg")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("batch failed: %v\n%s", err, out)
+	}
+
+	entries, _ := os.ReadDir(dstDir)
+	if len(entries) != 0 {
+		t.Fatal("expected no output files for unsupported inputs")
 	}
 }
 

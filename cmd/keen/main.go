@@ -36,23 +36,6 @@ func main() {
 				fmt.Fprintf(os.Stderr, "warning: --quality is ignored for lossless format %q\n", opts.Format)
 			}
 
-			srcInfo, err := os.Stat(src)
-			if err != nil {
-				return fmt.Errorf("stat src: %w", err)
-			}
-
-			if srcInfo.IsDir() {
-				if opts.Format == "" {
-					return fmt.Errorf("--format is required when converting a directory")
-				}
-				count, err := img.ConvertDir(img.New(), src, dst, opts)
-				if err != nil {
-					return err
-				}
-				fmt.Printf("converted %d files\n", count)
-				return nil
-			}
-
 			srcFile, err := os.Open(src)
 			if err != nil {
 				return fmt.Errorf("open src: %w", err)
@@ -69,13 +52,56 @@ func main() {
 		},
 	}
 
+	var batchCmd = &cobra.Command{
+		Use:   "batch [src-dir] [dst-dir]",
+		Short: "Convert all images in a directory",
+		Long:  "Batch converts all supported images in src-dir to dst-dir using the specified format.",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			src, dst := args[0], args[1]
+
+			if opts.Format == "" {
+				return fmt.Errorf("--format is required for batch conversion")
+			}
+
+			srcInfo, err := os.Stat(src)
+			if err != nil {
+				return fmt.Errorf("stat src: %w", err)
+			}
+			if !srcInfo.IsDir() {
+				return fmt.Errorf("src must be a directory")
+			}
+
+			opts.Progress = func(current, total int, srcName, dstName string) {
+				fmt.Fprintf(os.Stderr, "%s → %s [%d/%d]\n", srcName, dstName, current, total)
+			}
+
+			count, err := img.ConvertDir(img.New(), src, dst, opts)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(os.Stderr, "\n%d of %d files converted\n", count, count)
+			return nil
+		},
+	}
+
 	convertCmd.Flags().StringVarP(&opts.Format, "format", "f", "", "Output format (png, jpeg, gif, bmp, tiff, webp)")
 	convertCmd.Flags().IntVarP(&opts.Quality, "quality", "q", 85, "Output quality (1-100)")
 	convertCmd.Flags().IntVar(&opts.Width, "width", 0, "Resize width (0 = keep original)")
 	convertCmd.Flags().IntVar(&opts.Height, "height", 0, "Resize height (0 = keep original)")
 	convertCmd.Flags().BoolVar(&opts.Strip, "strip", false, "Strip metadata")
 
+	batchCmd.Flags().StringVarP(&opts.Format, "format", "f", "", "Output format (png, jpeg, gif, bmp, tiff, webp)")
+	batchCmd.Flags().IntVarP(&opts.Quality, "quality", "q", 85, "Output quality (1-100)")
+	batchCmd.Flags().IntVar(&opts.Width, "width", 0, "Resize width (0 = keep original)")
+	batchCmd.Flags().IntVar(&opts.Height, "height", 0, "Resize height (0 = keep original)")
+	batchCmd.Flags().BoolVar(&opts.Strip, "strip", false, "Strip metadata")
+	batchCmd.Flags().IntVar(&opts.Workers, "workers", 4, "Number of concurrent workers")
+
+	_ = batchCmd.MarkFlagRequired("format")
+
 	rootCmd.AddCommand(convertCmd)
+	rootCmd.AddCommand(batchCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
