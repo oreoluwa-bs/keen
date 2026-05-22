@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/oreoluwa-bs/keen/internal/img"
 	"github.com/spf13/cobra"
@@ -25,6 +26,10 @@ func main() {
 
 			if opts.Format == "" {
 				opts.Format = img.FormatFromExt(dst)
+			} else if cmd.Flags().Changed("format") {
+				if got := img.FormatFromExt(dst); got != "" && got != opts.Format {
+					fmt.Fprintf(os.Stderr, "warning: output extension %q doesn't match format %q\n", filepath.Ext(dst), opts.Format)
+				}
 			}
 
 			srcFile, err := os.Open(src)

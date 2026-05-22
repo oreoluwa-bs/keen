@@ -47,5 +47,6 @@ web/static/css/main.css
 database.sqlite
 
 testdata/output/
+testdata/keen_test*
 
 *.ignore.*
