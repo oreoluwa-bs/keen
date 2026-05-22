@@ -76,11 +76,11 @@ func main() {
 				fmt.Fprintf(os.Stderr, "%s → %s [%d/%d]\n", srcName, dstName, current, total)
 			}
 
-			count, err := img.ConvertDir(img.New(), src, dst, opts)
+			succeeded, total, err := img.ConvertDir(img.New(), src, dst, opts)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(os.Stderr, "\n%d of %d files converted\n", count, count)
+			fmt.Fprintf(os.Stderr, "\n%d of %d files converted\n", succeeded, total)
 			return nil
 		},
 	}
@@ -89,13 +89,13 @@ func main() {
 	convertCmd.Flags().IntVarP(&opts.Quality, "quality", "q", 85, "Output quality (1-100)")
 	convertCmd.Flags().IntVar(&opts.Width, "width", 0, "Resize width (0 = keep original)")
 	convertCmd.Flags().IntVar(&opts.Height, "height", 0, "Resize height (0 = keep original)")
-	convertCmd.Flags().BoolVar(&opts.Strip, "strip", false, "Strip metadata")
+	convertCmd.Flags().BoolVar(&opts.Strip, "strip", true, "Strip metadata (currently always stripped)")
 
 	batchCmd.Flags().StringVarP(&opts.Format, "format", "f", "", "Output format (png, jpeg, gif, bmp, tiff, webp)")
 	batchCmd.Flags().IntVarP(&opts.Quality, "quality", "q", 85, "Output quality (1-100)")
 	batchCmd.Flags().IntVar(&opts.Width, "width", 0, "Resize width (0 = keep original)")
 	batchCmd.Flags().IntVar(&opts.Height, "height", 0, "Resize height (0 = keep original)")
-	batchCmd.Flags().BoolVar(&opts.Strip, "strip", false, "Strip metadata")
+	batchCmd.Flags().BoolVar(&opts.Strip, "strip", true, "Strip metadata (currently always stripped)")
 	batchCmd.Flags().IntVar(&opts.Workers, "workers", 4, "Number of concurrent workers")
 
 	_ = batchCmd.MarkFlagRequired("format")

@@ -265,12 +265,15 @@ func TestConvertDir(t *testing.T) {
 		fh.Close()
 	}
 
-	count, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "webp", Quality: 85})
+	succeeded, total, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "webp", Quality: 85})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if count != 2 {
-		t.Fatalf("expected 2 files converted, got %d", count)
+	if succeeded != 2 {
+		t.Fatalf("expected 2 files converted, got %d", succeeded)
+	}
+	if total != 2 {
+		t.Fatalf("expected total 2, got %d", total)
 	}
 
 	for _, name := range []string{"a.webp", "b.webp"} {
@@ -287,12 +290,15 @@ func TestConvertDirSkipsUnknownExt(t *testing.T) {
 	fh, _ := os.Create(filepath.Join(srcDir, "note.txt"))
 	fh.Close()
 
-	count, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "png"})
+	succeeded, total, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "png"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if count != 0 {
-		t.Fatalf("expected 0, got %d", count)
+	if succeeded != 0 {
+		t.Fatalf("expected 0, got %d", succeeded)
+	}
+	if total != 0 {
+		t.Fatalf("expected total 0, got %d", total)
 	}
 }
 
@@ -301,5 +307,107 @@ func TestUnsupportedFormat(t *testing.T) {
 	err := New().Convert(bytes.NewReader(nil), &buf, Options{Format: "avif"})
 	if err == nil {
 		t.Fatal("expected error for unsupported format")
+	}
+}
+
+func TestConvertDirInvalidFormatEarly(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	fh, err := os.Create(filepath.Join(srcDir, "a.png"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := encodePNG(createTestImage(), fh, Options{}); err != nil {
+		fh.Close()
+		t.Fatal(err)
+	}
+	fh.Close()
+
+	_, _, err = ConvertDir(New(), srcDir, dstDir, Options{Format: "avif"})
+	if err == nil {
+		t.Fatal("expected error for unsupported batch format")
+	}
+
+	entries, _ := os.ReadDir(dstDir)
+	if len(entries) != 0 {
+		t.Fatal("expected no output files for invalid format")
+	}
+}
+
+func TestConvertDirCollisionDetected(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	for _, name := range []string{"a.png", "a.jpg"} {
+		fh, err := os.Create(filepath.Join(srcDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := encodePNG(createTestImage(), fh, Options{}); err != nil {
+			fh.Close()
+			t.Fatal(err)
+		}
+		fh.Close()
+	}
+
+	_, _, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "webp"})
+	if err == nil {
+		t.Fatal("expected collision error")
+	}
+}
+
+func TestConvertDirProgressProcessedCount(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	for _, name := range []string{"a.png", "b.png"} {
+		fh, err := os.Create(filepath.Join(srcDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := encodePNG(createTestImage(), fh, Options{}); err != nil {
+			fh.Close()
+			t.Fatal(err)
+		}
+		fh.Close()
+	}
+
+	var processed []int
+	opts := Options{Format: "webp", Progress: func(current, total int, srcName, dstName string) {
+		processed = append(processed, current)
+	}}
+
+	ConvertDir(New(), srcDir, dstDir, opts)
+
+	if len(processed) != 2 {
+		t.Fatalf("expected 2 progress calls, got %d", len(processed))
+	}
+	if processed[0] != 1 || processed[1] != 2 {
+		t.Fatalf("expected progress [1, 2], got %v", processed)
+	}
+}
+
+func TestConvertDirNoPartialOutputOnFailure(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	fh, err := os.Create(filepath.Join(srcDir, "bad.png"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	fh.WriteString("not an image")
+	fh.Close()
+
+	_, _, err = ConvertDir(New(), srcDir, dstDir, Options{Format: "webp"})
+	if err == nil {
+		t.Fatal("expected error for invalid image")
+	}
+
+	entries, _ := os.ReadDir(dstDir)
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".webp") || strings.HasSuffix(e.Name(), ".tmp") {
+			t.Fatalf("unexpected partial file: %s", e.Name())
+		}
 	}
 }
