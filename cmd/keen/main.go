@@ -32,6 +32,10 @@ func main() {
 				}
 			}
 
+			if cmd.Flags().Changed("quality") && opts.Format != "" && img.IsLossless(opts.Format) {
+				fmt.Fprintf(os.Stderr, "warning: --quality is ignored for lossless format %q\n", opts.Format)
+			}
+
 			srcFile, err := os.Open(src)
 			if err != nil {
 				return fmt.Errorf("open src: %w", err)

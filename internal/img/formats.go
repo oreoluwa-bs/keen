@@ -39,6 +39,15 @@ var extToFormat = map[string]string{
 	".webp": "webp",
 }
 
+func IsLossless(format string) bool {
+	switch format {
+	case "png", "gif", "bmp", "tiff", "webp":
+		return true
+	default:
+		return false
+	}
+}
+
 func FormatFromExt(path string) string {
 	ext := strings.ToLower(path)
 	i := strings.LastIndexByte(ext, '.')

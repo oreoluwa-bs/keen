@@ -217,6 +217,36 @@ func TestConvertRealImages(t *testing.T) {
 	}
 }
 
+func TestQualityClamp(t *testing.T) {
+	var pngBuf bytes.Buffer
+	if err := encodePNG(createTestImage(), &pngBuf, Options{}); err != nil {
+		t.Fatal(err)
+	}
+	src := pngBuf.Bytes()
+
+	tests := []struct {
+		name    string
+		quality int
+	}{
+		{"zero", 0},
+		{"negative", -5},
+		{"over max", 200},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := New().Convert(bytes.NewReader(src), &out, Options{Format: "jpeg", Quality: tt.quality})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if out.Len() == 0 {
+				t.Fatal("empty output")
+			}
+		})
+	}
+}
+
 func TestUnsupportedFormat(t *testing.T) {
 	var buf bytes.Buffer
 	err := New().Convert(bytes.NewReader(nil), &buf, Options{Format: "avif"})

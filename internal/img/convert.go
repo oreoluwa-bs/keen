@@ -19,6 +19,13 @@ func New() Converter {
 }
 
 func (c *converter) Convert(src io.Reader, dst io.Writer, opts Options) error {
+	if opts.Quality < 1 {
+		opts.Quality = 1
+	}
+	if opts.Quality > 100 {
+		opts.Quality = 100
+	}
+
 	srcImg, _, err := image.Decode(src)
 	if err != nil {
 		return fmt.Errorf("decode: %w", err)

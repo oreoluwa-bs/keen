@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -66,6 +67,24 @@ func TestConvertExplicitFormat(t *testing.T) {
 	}
 	if info.Size() == 0 {
 		t.Fatal("output file is empty")
+	}
+}
+
+func TestConvertLosslessQualityWarning(t *testing.T) {
+	outDir := "../../testdata/output"
+	outPath := filepath.Join(outDir, "lossless_warn.png")
+	os.MkdirAll(outDir, 0755)
+	defer os.Remove(outPath)
+
+	cmd := exec.Command(binary, "convert",
+		"../../testdata/input/fixture.png", outPath,
+		"--quality", "90")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("convert failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(string(out), "warning") {
+		t.Fatal("expected warning about quality on lossless format")
 	}
 }
 
