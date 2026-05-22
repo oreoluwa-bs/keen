@@ -46,4 +46,6 @@ web/static/css/main.css
 
 database.sqlite
 
+testdata/output/
+
 *.ignore.*
