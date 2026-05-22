@@ -88,6 +88,45 @@ func TestConvertLosslessQualityWarning(t *testing.T) {
 	}
 }
 
+func TestConvertBatch(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	// Copy fixture files to temp src dir — different base names to avoid collisions
+	fixtures := map[string]string{"a.png": "fixture.png", "b.webp": "fixture.webp"}
+	for dstName, srcName := range fixtures {
+		data, err := os.ReadFile("../../testdata/input/" + srcName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(srcDir, dstName), data, 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	cmd := exec.Command(binary, "convert", srcDir, dstDir, "--format", "png")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("batch convert failed: %v\n%s", err, out)
+	}
+
+	entries, err := os.ReadDir(dstDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 output files, got %d", len(entries))
+	}
+}
+
+func TestConvertBatchRequiresFormat(t *testing.T) {
+	srcDir := t.TempDir()
+	cmd := exec.Command(binary, "convert", srcDir, "../../testdata/output")
+	if err := cmd.Run(); err == nil {
+		t.Fatal("expected error when --format is missing for directory")
+	}
+}
+
 func TestConvertMissingSrc(t *testing.T) {
 	cmd := exec.Command(binary, "convert", "nonexistent.png", "out.png")
 	if err := cmd.Run(); err == nil {
