@@ -87,5 +87,7 @@ func encodeTIFF(img image.Image, w io.Writer, _ Options) error {
 }
 
 func encodeWebP(img image.Image, w io.Writer, _ Options) error {
-	return nativewebp.Encode(w, img, nil)
+	return nativewebp.Encode(w, img, &nativewebp.Options{
+		CompressionLevel: nativewebp.BestCompression,
+	})
 }
