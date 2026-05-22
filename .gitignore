@@ -51,4 +51,4 @@ testdata/keen_test*
 
 *.ignore.*
 
-keen
+/keen
