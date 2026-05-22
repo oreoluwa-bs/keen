@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -76,7 +77,7 @@ func main() {
 				fmt.Fprintf(os.Stderr, "%s → %s [%d/%d]\n", srcName, dstName, current, total)
 			}
 
-			succeeded, total, err := img.ConvertDir(img.New(), src, dst, opts)
+			succeeded, total, err := img.ConvertDir(context.Background(), img.New(), src, dst, opts)
 			if err != nil {
 				return err
 			}

@@ -1,13 +1,15 @@
 package img
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"image"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
-	"sync"
 
 	"golang.org/x/image/draw"
 )
@@ -51,7 +53,16 @@ func (c *converter) Convert(src io.Reader, dst io.Writer, opts Options) error {
 	return nil
 }
 
-func ConvertDir(conv Converter, srcDir, dstDir string, opts Options) (succeeded int, total int, err error) {
+type job struct {
+	src, dst, srcName, dstName string
+}
+
+type result struct {
+	srcName, dstName string
+	err              error
+}
+
+func ConvertDir(ctx context.Context, conv Converter, srcDir, dstDir string, opts Options) (succeeded int, total int, err error) {
 	if opts.Format == "" {
 		return 0, 0, fmt.Errorf("format is required")
 	}
@@ -64,32 +75,21 @@ func ConvertDir(conv Converter, srcDir, dstDir string, opts Options) (succeeded 
 		return 0, 0, fmt.Errorf("read src dir: %w", err)
 	}
 
-	if err := os.MkdirAll(dstDir, 0755); err != nil {
-		return 0, 0, fmt.Errorf("create dst dir: %w", err)
-	}
-
-	type job struct {
-		src     string
-		dst     string
-		srcName string
-		dstName string
-	}
-
+	ext := formatToExt[opts.Format]
 	var jobs []job
 	dstNames := make(map[string]int)
 
-	ext := formatToExt[opts.Format]
 	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		srcPath := filepath.Join(srcDir, entry.Name())
-		if FormatFromExt(srcPath) == "" {
+		if entry.IsDir() || FormatFromExt(entry.Name()) == "" {
 			continue
 		}
 		dstName := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name())) + ext
-		dstPath := filepath.Join(dstDir, dstName)
-		jobs = append(jobs, job{srcPath, dstPath, entry.Name(), dstName})
+		jobs = append(jobs, job{
+			src:     filepath.Join(srcDir, entry.Name()),
+			dst:     filepath.Join(dstDir, dstName),
+			srcName: entry.Name(),
+			dstName: dstName,
+		})
 		dstNames[dstName]++
 	}
 
@@ -104,88 +104,94 @@ func ConvertDir(conv Converter, srcDir, dstDir string, opts Options) (succeeded 
 		return 0, 0, nil
 	}
 
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return 0, 0, fmt.Errorf("create dst dir: %w", err)
+	}
+
 	numWorkers := opts.Workers
 	if numWorkers < 1 {
-		numWorkers = 1
+		numWorkers = runtime.NumCPU() // or 1, depending on your policy
 	}
 
-	type result struct {
-		srcName string
-		dstName string
-		err     error
-	}
-
-	jobCh := make(chan job, total)
-	resultCh := make(chan result, total)
+	jobCh := make(chan job, numWorkers)
+	resultCh := make(chan result, numWorkers)
 
 	for range numWorkers {
 		go func() {
 			for j := range jobCh {
-				err := convertFile(conv, j.src, j.dst, opts)
-				resultCh <- result{j.srcName, j.dstName, err}
+				select {
+				case <-ctx.Done():
+					resultCh <- result{j.srcName, j.dstName, ctx.Err()}
+					return
+				default:
+				}
+				resultCh <- result{j.srcName, j.dstName, convertFile(conv, j.src, j.dst, opts)}
 			}
 		}()
 	}
 
+	// Send jobs (respects backpressure due to smaller buffer)
 	for _, j := range jobs {
-		jobCh <- j
+		select {
+		case jobCh <- j:
+		case <-ctx.Done():
+			close(jobCh)
+			return 0, total, ctx.Err()
+		}
 	}
 	close(jobCh)
 
 	var (
-		mu        sync.Mutex
-		processed int
-		succ      int
-		errs      []error
+		succ int
+		errs []error
 	)
-
-	for range total {
+	for i := 0; i < total; i++ {
 		r := <-resultCh
-		mu.Lock()
-		processed++
 		if r.err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", r.srcName, r.err))
 		} else {
 			succ++
 		}
 		if opts.Progress != nil {
-			opts.Progress(processed, total, r.srcName, r.dstName)
+			opts.Progress(i+1, total, r.srcName, r.dstName)
 		}
-		mu.Unlock()
 	}
 
 	if len(errs) > 0 {
-		return succ, total, fmt.Errorf("%d of %d files failed; first error: %w", len(errs), total, errs[0])
+		if len(errs) > 1 {
+			return succ, total, errors.Join(errs...)
+		}
+		return succ, total, errs[0]
 	}
-
 	return succ, total, nil
 }
 
 func convertFile(conv Converter, srcPath, dstPath string, opts Options) error {
-	srcFile, err := os.Open(srcPath)
+	src, err := os.Open(srcPath)
 	if err != nil {
-		return fmt.Errorf("open: %w", err)
+		return fmt.Errorf("open source %q: %w", srcPath, err)
 	}
-	defer srcFile.Close()
+	defer src.Close()
 
-	dstDir := filepath.Dir(dstPath)
-	tmpFile, err := os.CreateTemp(dstDir, "*.tmp")
+	dst, err := os.Create(dstPath)
 	if err != nil {
-		return fmt.Errorf("create temp: %w", err)
-	}
-	tmpPath := tmpFile.Name()
-
-	err = conv.Convert(srcFile, tmpFile, opts)
-	tmpFile.Close()
-	if err != nil {
-		os.Remove(tmpPath)
-		return fmt.Errorf("convert: %w", err)
+		return fmt.Errorf("create destination %q: %w", dstPath, err)
 	}
 
-	if err := os.Rename(tmpPath, dstPath); err != nil {
-		os.Remove(tmpPath)
-		return fmt.Errorf("rename: %w", err)
+	// Convert using streams
+	err = conv.Convert(src, dst, opts)
+
+	// Check close error (catches flush/sync failures)
+	if closeErr := dst.Close(); err == nil && closeErr != nil {
+		err = closeErr
 	}
+
+	// Clean up partial/corrupt output on failure
+	if err != nil {
+		os.Remove(dstPath)
+		return fmt.Errorf("convert %q: %w", srcPath, err)
+	}
+
 	return nil
 }
 

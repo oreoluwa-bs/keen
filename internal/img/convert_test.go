@@ -2,6 +2,7 @@ package img
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"image/color"
@@ -265,7 +266,7 @@ func TestConvertDir(t *testing.T) {
 		fh.Close()
 	}
 
-	succeeded, total, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "webp", Quality: 85})
+	succeeded, total, err := ConvertDir(context.Background(), New(), srcDir, dstDir, Options{Format: "webp", Quality: 85})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +291,7 @@ func TestConvertDirSkipsUnknownExt(t *testing.T) {
 	fh, _ := os.Create(filepath.Join(srcDir, "note.txt"))
 	fh.Close()
 
-	succeeded, total, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "png"})
+	succeeded, total, err := ConvertDir(context.Background(), New(), srcDir, dstDir, Options{Format: "png"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +325,7 @@ func TestConvertDirInvalidFormatEarly(t *testing.T) {
 	}
 	fh.Close()
 
-	_, _, err = ConvertDir(New(), srcDir, dstDir, Options{Format: "avif"})
+	_, _, err = ConvertDir(context.Background(), New(), srcDir, dstDir, Options{Format: "avif"})
 	if err == nil {
 		t.Fatal("expected error for unsupported batch format")
 	}
@@ -351,7 +352,7 @@ func TestConvertDirCollisionDetected(t *testing.T) {
 		fh.Close()
 	}
 
-	_, _, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "webp"})
+	_, _, err := ConvertDir(context.Background(), New(), srcDir, dstDir, Options{Format: "webp"})
 	if err == nil {
 		t.Fatal("expected collision error")
 	}
@@ -378,7 +379,7 @@ func TestConvertDirProgressProcessedCount(t *testing.T) {
 		processed = append(processed, current)
 	}}
 
-	ConvertDir(New(), srcDir, dstDir, opts)
+	ConvertDir(context.Background(), New(), srcDir, dstDir, opts)
 
 	if len(processed) != 2 {
 		t.Fatalf("expected 2 progress calls, got %d", len(processed))
@@ -399,7 +400,7 @@ func TestConvertDirNoPartialOutputOnFailure(t *testing.T) {
 	fh.WriteString("not an image")
 	fh.Close()
 
-	_, _, err = ConvertDir(New(), srcDir, dstDir, Options{Format: "webp"})
+	_, _, err = ConvertDir(context.Background(), New(), srcDir, dstDir, Options{Format: "webp"})
 	if err == nil {
 		t.Fatal("expected error for invalid image")
 	}
