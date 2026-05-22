@@ -247,6 +247,55 @@ func TestQualityClamp(t *testing.T) {
 	}
 }
 
+func TestConvertDir(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	pairs := map[string]string{"a.png": "png", "b.jpeg": "jpeg"}
+	for name, f := range pairs {
+		path := filepath.Join(srcDir, name)
+		fh, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := formats[f](createTestImage(), fh, Options{}); err != nil {
+			fh.Close()
+			t.Fatal(err)
+		}
+		fh.Close()
+	}
+
+	count, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "webp", Quality: 85})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("expected 2 files converted, got %d", count)
+	}
+
+	for _, name := range []string{"a.webp", "b.webp"} {
+		if _, err := os.Stat(filepath.Join(dstDir, name)); err != nil {
+			t.Fatalf("missing output %s", name)
+		}
+	}
+}
+
+func TestConvertDirSkipsUnknownExt(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	fh, _ := os.Create(filepath.Join(srcDir, "note.txt"))
+	fh.Close()
+
+	count, err := ConvertDir(New(), srcDir, dstDir, Options{Format: "png"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Fatalf("expected 0, got %d", count)
+	}
+}
+
 func TestUnsupportedFormat(t *testing.T) {
 	var buf bytes.Buffer
 	err := New().Convert(bytes.NewReader(nil), &buf, Options{Format: "avif"})

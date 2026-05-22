@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"golang.org/x/image/draw"
 )
@@ -45,6 +48,56 @@ func (c *converter) Convert(src io.Reader, dst io.Writer, opts Options) error {
 	}
 
 	return nil
+}
+
+func ConvertDir(conv Converter, srcDir, dstDir string, opts Options) (int, error) {
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		return 0, fmt.Errorf("read src dir: %w", err)
+	}
+
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return 0, fmt.Errorf("create dst dir: %w", err)
+	}
+
+	var count int
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		srcPath := filepath.Join(srcDir, entry.Name())
+		if FormatFromExt(srcPath) == "" {
+			continue
+		}
+
+		ext := formatToExt[opts.Format]
+		dstName := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name())) + ext
+		dstPath := filepath.Join(dstDir, dstName)
+
+		srcFile, err := os.Open(srcPath)
+		if err != nil {
+			return count, fmt.Errorf("open %s: %w", srcPath, err)
+		}
+
+		dstFile, err := os.Create(dstPath)
+		if err != nil {
+			srcFile.Close()
+			return count, fmt.Errorf("create %s: %w", dstPath, err)
+		}
+
+		if err := conv.Convert(srcFile, dstFile, opts); err != nil {
+			srcFile.Close()
+			dstFile.Close()
+			return count, fmt.Errorf("convert %s: %w", srcPath, err)
+		}
+
+		srcFile.Close()
+		dstFile.Close()
+		count++
+	}
+
+	return count, nil
 }
 
 func resize(src image.Image, width, height int) image.Image {

@@ -36,6 +36,23 @@ func main() {
 				fmt.Fprintf(os.Stderr, "warning: --quality is ignored for lossless format %q\n", opts.Format)
 			}
 
+			srcInfo, err := os.Stat(src)
+			if err != nil {
+				return fmt.Errorf("stat src: %w", err)
+			}
+
+			if srcInfo.IsDir() {
+				if opts.Format == "" {
+					return fmt.Errorf("--format is required when converting a directory")
+				}
+				count, err := img.ConvertDir(img.New(), src, dst, opts)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("converted %d files\n", count)
+				return nil
+			}
+
 			srcFile, err := os.Open(src)
 			if err != nil {
 				return fmt.Errorf("open src: %w", err)

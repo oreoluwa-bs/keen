@@ -28,6 +28,15 @@ func init() {
 	}
 }
 
+var formatToExt = map[string]string{
+	"png":  ".png",
+	"jpeg": ".jpg",
+	"gif":  ".gif",
+	"bmp":  ".bmp",
+	"tiff": ".tiff",
+	"webp": ".webp",
+}
+
 var extToFormat = map[string]string{
 	".png":  "png",
 	".jpg":  "jpeg",
