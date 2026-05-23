@@ -7,7 +7,6 @@ type Options struct {
 	Quality     int
 	Width       int
 	Height      int
-	Strip       bool
 	StripExif   bool
 	Orientation int
 	Workers     int
