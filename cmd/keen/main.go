@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -37,11 +38,14 @@ func main() {
 				fmt.Fprintf(os.Stderr, "warning: --quality is ignored for lossless format %q\n", opts.Format)
 			}
 
-			srcFile, err := os.Open(src)
+			srcData, err := os.ReadFile(src)
 			if err != nil {
-				return fmt.Errorf("open src: %w", err)
+				return fmt.Errorf("read src: %w", err)
 			}
-			defer srcFile.Close()
+
+			if !opts.StripExif {
+				opts.Orientation = img.ReadEXIFOrientation(srcData)
+			}
 
 			dstFile, err := os.Create(dst)
 			if err != nil {
@@ -49,7 +53,7 @@ func main() {
 			}
 			defer dstFile.Close()
 
-			return img.New().Convert(srcFile, dstFile, opts)
+			return img.New().Convert(bytes.NewReader(srcData), dstFile, opts)
 		},
 	}
 
@@ -91,12 +95,14 @@ func main() {
 	convertCmd.Flags().IntVar(&opts.Width, "width", 0, "Resize width (0 = keep original)")
 	convertCmd.Flags().IntVar(&opts.Height, "height", 0, "Resize height (0 = keep original)")
 	convertCmd.Flags().BoolVar(&opts.Strip, "strip", true, "Strip metadata (currently always stripped)")
+	convertCmd.Flags().BoolVar(&opts.StripExif, "strip-exif", false, "Strip EXIF metadata (orientation preserved by default)")
 
 	batchCmd.Flags().StringVarP(&opts.Format, "format", "f", "", "Output format (png, jpeg, gif, bmp, tiff, webp)")
 	batchCmd.Flags().IntVarP(&opts.Quality, "quality", "q", 85, "Output quality (1-100)")
 	batchCmd.Flags().IntVar(&opts.Width, "width", 0, "Resize width (0 = keep original)")
 	batchCmd.Flags().IntVar(&opts.Height, "height", 0, "Resize height (0 = keep original)")
 	batchCmd.Flags().BoolVar(&opts.Strip, "strip", true, "Strip metadata (currently always stripped)")
+	batchCmd.Flags().BoolVar(&opts.StripExif, "strip-exif", false, "Strip EXIF metadata (orientation preserved by default)")
 	batchCmd.Flags().IntVar(&opts.Workers, "workers", 4, "Number of concurrent workers")
 
 	_ = batchCmd.MarkFlagRequired("format")
