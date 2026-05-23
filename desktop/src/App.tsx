@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useState } from "react";
 import "./App.css";
+import { Button } from "@/components/ui/button";
 import { Controls } from "./components/controls";
 import { Dropzone } from "./components/dropzone";
 import { Grid } from "./components/grid";
@@ -42,12 +43,9 @@ function App() {
             <span className="text-[12px] text-muted-foreground tabular-nums">
               {images.length} image{images.length !== 1 ? "s" : ""}
             </span>
-            <button
-              onClick={clearAll}
-              className="text-[12px] text-muted-foreground hover:text-foreground transition-colors duration-80"
-            >
+            <Button variant="ghost" size="sm" onClick={clearAll}>
               Clear
-            </button>
+            </Button>
           </div>
         )}
       </header>

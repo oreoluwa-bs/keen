@@ -1,7 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import type { ImageItem } from "@/lib/images";
 import { cn } from "@/lib/utils";
+import { Cancel01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "framer-motion";
 import { useCallback, useState } from "react";
 
@@ -74,18 +77,11 @@ export function ImageCell({ item, onRemove, index }: ImageCellProps) {
         )}
         {item.status === "done" && (
           <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-foreground flex items-center justify-center">
-            <svg
-              width={12}
-              height={12}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--background)"
-              strokeWidth={3}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="4 12 9 17 20 6" />
-            </svg>
+            <HugeiconsIcon
+              icon={Tick02Icon}
+              size={12}
+              color="var(--background)"
+            />
           </div>
         )}
         {item.status === "error" && (
@@ -95,29 +91,19 @@ export function ImageCell({ item, onRemove, index }: ImageCellProps) {
             </span>
           </div>
         )}
-        <button
+        <Button
+          size="icon-sm"
+          variant="ghost"
           onClick={handleRemove}
+          aria-label="Remove image"
           className={cn(
-            "absolute top-2 left-2 h-6 w-6 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center",
+            "absolute top-2 left-2",
             "transition-opacity duration-125 ease-out",
             showRemove ? "opacity-100" : "opacity-0 group-hover:opacity-100",
           )}
-          aria-label="Remove image"
         >
-          <svg
-            width={12}
-            height={12}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+          <HugeiconsIcon icon={Cancel01Icon} size={12} />
+        </Button>
       </div>
       <p className="mt-1.5 text-[12px] text-muted-foreground truncate px-0.5">
         {item.name}

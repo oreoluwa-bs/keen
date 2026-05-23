@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import { Upload04Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
@@ -38,21 +40,11 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
         )}
       >
         <input {...getInputProps()} />
-        <svg
-          width={16}
-          height={16}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <HugeiconsIcon
+          icon={Upload04Icon}
+          size={16}
           className="text-muted-foreground shrink-0"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
+        />
         <span className="text-[13px] text-muted-foreground">
           {active ? "Drop to add" : "Add more images"}
         </span>
@@ -77,25 +69,11 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
           active ? "border-foreground bg-accent/50" : "border-border",
         )}
       >
-        <svg
-          width={32}
-          height={32}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-muted-foreground"
-          style={{
-            transform: active ? "scale(1.05)" : "scale(1)",
-            transition: "transform 150ms ease-out",
-          }}
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
+        <HugeiconsIcon
+          icon={Upload04Icon}
+          size={16}
+          className="text-muted-foreground shrink-0"
+        />
         <div className="flex flex-col items-center gap-1">
           <span className="text-[14px] font-medium text-foreground">
             Upload images
