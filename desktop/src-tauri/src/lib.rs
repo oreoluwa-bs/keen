@@ -28,12 +28,27 @@ async fn run_keen(app: tauri::AppHandle, args: Vec<String>) -> Result<String, St
     }
 }
 
+#[tauri::command]
+async fn write_temp_file(name: String, data: Vec<u8>) -> Result<String, String> {
+    let tmp = std::env::temp_dir().join("keen").join(&name);
+    if let Some(parent) = tmp.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&tmp, data).map_err(|e| e.to_string())?;
+    Ok(tmp.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+async fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
+    std::fs::read(&path).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet, run_keen])
+        .invoke_handler(tauri::generate_handler![greet, run_keen, write_temp_file, read_file_bytes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

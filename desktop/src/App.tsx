@@ -8,14 +8,7 @@ import { Grid } from "./components/grid";
 import { useImageState, type Format } from "./lib/images";
 
 function App() {
-  const {
-    images,
-    addImages,
-    removeImage,
-    clearAll,
-    isConverting,
-    setIsConverting,
-  } = useImageState();
+  const { images, setImages, addImages, removeImage, clearAll, isConverting, setIsConverting } = useImageState();
   const [format, setFormat] = useState<Format>("webp");
   const [quality, setQuality] = useState(85);
 
@@ -23,12 +16,55 @@ function App() {
     setIsConverting(true);
     for (const image of images) {
       if (image.status !== "pending") continue;
+
+      setImages((prev) =>
+        prev.map((i) => (i.id === image.id ? { ...i, status: "converting" as const } : i))
+      );
+
       try {
-        await invoke("run_keen", {
-          args: ["--version"],
+        const buf = await image.file.arrayBuffer();
+        const bytes = Array.from(new Uint8Array(buf));
+
+        const inputPath: string = await invoke("write_temp_file", {
+          name: image.file.name,
+          data: bytes,
         });
+
+        const baseName = image.file.name.replace(/\.[^.]+$/, "");
+        const outputName = `${baseName}.${format}`;
+        const outputPath = inputPath.replace(/[^/]+$/, outputName);
+
+        await invoke("run_keen", {
+          args: [
+            "convert",
+            inputPath,
+            outputPath,
+            "--format",
+            format,
+            "--quality",
+            String(quality),
+          ],
+        });
+
+        const resultBytes: number[] = await invoke("read_file_bytes", {
+          path: outputPath,
+        });
+
+        const blob = new Blob([new Uint8Array(resultBytes)]);
+        const url = URL.createObjectURL(blob);
+
+        setImages((prev) =>
+          prev.map((i) => {
+            if (i.id !== image.id) return i;
+            URL.revokeObjectURL(i.preview);
+            return { ...i, status: "done" as const, preview: url };
+          })
+        );
       } catch (err) {
-        console.error(err);
+        const msg = err instanceof Error ? err.message : String(err);
+        setImages((prev) =>
+          prev.map((i) => (i.id === image.id ? { ...i, status: "error" as const, error: msg } : i))
+        );
       }
     }
     setIsConverting(false);
