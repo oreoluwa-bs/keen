@@ -3,7 +3,7 @@ module github.com/oreoluwa-bs/keen
 go 1.25.5
 
 require (
-	github.com/HugoSmits86/nativewebp v1.3.0
+	github.com/chai2010/webp v1.4.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/image v0.41.0
 )

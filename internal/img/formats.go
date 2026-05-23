@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/HugoSmits86/nativewebp"
+	"github.com/chai2010/webp"
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/tiff"
 )
@@ -50,7 +50,7 @@ var extToFormat = map[string]string{
 
 func IsLossless(format string) bool {
 	switch format {
-	case "png", "gif", "bmp", "tiff", "webp":
+	case "png", "gif", "bmp", "tiff":
 		return true
 	default:
 		return false
@@ -86,8 +86,9 @@ func encodeTIFF(img image.Image, w io.Writer, _ Options) error {
 	return tiff.Encode(w, img, &tiff.Options{Compression: tiff.Deflate})
 }
 
-func encodeWebP(img image.Image, w io.Writer, _ Options) error {
-	return nativewebp.Encode(w, img, &nativewebp.Options{
-		CompressionLevel: nativewebp.BestCompression,
+func encodeWebP(img image.Image, w io.Writer, opts Options) error {
+	return webp.Encode(w, img, &webp.Options{
+		Lossless: false,
+		Quality:  float32(opts.Quality),
 	})
 }
