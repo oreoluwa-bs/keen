@@ -1,50 +1,78 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useState } from "react";
 import "./App.css";
-import reactLogo from "./assets/react.svg";
+import { Controls } from "./components/controls";
+import { Dropzone } from "./components/dropzone";
+import { Grid } from "./components/grid";
+import { useImageState, type Format } from "./lib/images";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const {
+    images,
+    addImages,
+    removeImage,
+    clearAll,
+    isConverting,
+    setIsConverting,
+  } = useImageState();
+  const [format, setFormat] = useState<Format>("webp");
+  const [quality, setQuality] = useState(85);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const handleConvert = async () => {
+    setIsConverting(true);
+    for (const image of images) {
+      if (image.status !== "pending") continue;
+      try {
+        await invoke("run_keen", {
+          args: ["--version"],
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setIsConverting(false);
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="h-dvh flex flex-col overflow-hidden bg-background">
+      <header className="flex items-center justify-between px-4 h-12 shrink-0 border-b border-border">
+        <span className="text-[14px] font-medium tracking-tight">keen</span>
+        {images.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted-foreground tabular-nums">
+              {images.length} image{images.length !== 1 ? "s" : ""}
+            </span>
+            <button
+              onClick={clearAll}
+              className="text-[12px] text-muted-foreground hover:text-foreground transition-colors duration-80"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </header>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {images.length === 0 ? (
+          <Dropzone onFiles={addImages} hasImages={false} />
+        ) : (
+          <>
+            <Dropzone onFiles={addImages} hasImages={true} />
+            <Grid images={images} onRemove={removeImage} />
+          </>
+        )}
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+      {images.length > 0 && (
+        <Controls
+          format={format}
+          onFormatChange={setFormat}
+          quality={quality}
+          onQualityChange={setQuality}
+          onConvert={handleConvert}
+          isConverting={isConverting}
+          images={images}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      )}
+    </div>
   );
 }
 
