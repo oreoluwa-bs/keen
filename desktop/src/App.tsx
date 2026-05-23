@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import { useState } from "react";
 import "./App.css";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,15 @@ function App() {
   const { images, setImages, addImages, removeImage, clearAll, isConverting, setIsConverting } = useImageState();
   const [format, setFormat] = useState<Format>("webp");
   const [quality, setQuality] = useState(85);
+  const [outputFolder, setOutputFolder] = useState<string | null>(null);
+
+  const handlePickFolder = async () => {
+    const folder = await open({ directory: true });
+    if (folder) setOutputFolder(folder);
+  };
 
   const handleConvert = async () => {
+    if (!outputFolder) return;
     setIsConverting(true);
     for (const image of images) {
       if (image.status !== "pending") continue;
@@ -31,8 +39,7 @@ function App() {
         });
 
         const baseName = image.file.name.replace(/\.[^.]+$/, "");
-        const outputName = `${baseName}.${format}`;
-        const outputPath = inputPath.replace(/[^/]+$/, outputName);
+        const outputPath = `${outputFolder}/${baseName}.${format}`;
 
         await invoke("run_keen", {
           args: [
@@ -46,19 +53,8 @@ function App() {
           ],
         });
 
-        const resultBytes: number[] = await invoke("read_file_bytes", {
-          path: outputPath,
-        });
-
-        const blob = new Blob([new Uint8Array(resultBytes)]);
-        const url = URL.createObjectURL(blob);
-
         setImages((prev) =>
-          prev.map((i) => {
-            if (i.id !== image.id) return i;
-            URL.revokeObjectURL(i.preview);
-            return { ...i, status: "done" as const, preview: url };
-          })
+          prev.map((i) => (i.id === image.id ? { ...i, status: "done" as const } : i))
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -101,6 +97,8 @@ function App() {
           onFormatChange={setFormat}
           quality={quality}
           onQualityChange={setQuality}
+          outputFolder={outputFolder}
+          onPickFolder={handlePickFolder}
           onConvert={handleConvert}
           isConverting={isConverting}
           images={images}

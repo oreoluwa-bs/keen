@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SliderComfortable } from "@/components/ui/slider";
 import { FORMATS, type Format, type ImageItem } from "@/lib/images";
 import { cn } from "@/lib/utils";
-import { Upload04Icon } from "@hugeicons/core-free-icons";
+import { Folder01Icon, Upload04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRef, useState } from "react";
@@ -14,6 +14,8 @@ interface ControlsProps {
   onFormatChange: (f: Format) => void;
   quality: number;
   onQualityChange: (q: number) => void;
+  outputFolder: string | null;
+  onPickFolder: () => void;
   onConvert: () => void;
   isConverting: boolean;
   images: ImageItem[];
@@ -24,6 +26,8 @@ export function Controls({
   onFormatChange,
   quality,
   onQualityChange,
+  outputFolder,
+  onPickFolder,
   onConvert,
   isConverting,
   images,
@@ -144,13 +148,31 @@ export function Controls({
           />
         </div>
 
+        <button
+          type="button"
+          onClick={onPickFolder}
+          className={cn(
+            "group inline-flex items-center gap-2 outline-none cursor-pointer",
+            "text-[13px] h-8 px-3",
+            "border border-border bg-transparent",
+            "transition-all duration-80 rounded-lg",
+            "focus-visible:ring-1 focus-visible:ring-[#6B97FF]",
+            outputFolder ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <HugeiconsIcon icon={Folder01Icon} size={16} className="shrink-0" />
+          <span className="max-w-[180px] truncate">
+            {outputFolder ?? "Output folder"}
+          </span>
+        </button>
+
         <div className="flex-1" />
 
         <Button
           variant="primary"
           size="md"
           loading={isConverting}
-          disabled={isConverting || pendingCount === 0}
+          disabled={isConverting || pendingCount === 0 || !outputFolder}
           leadingIcon={
             !isConverting
               ? () => <HugeiconsIcon icon={Upload04Icon} size={16} />
@@ -158,9 +180,11 @@ export function Controls({
           }
           onClick={onConvert}
         >
-          {isConverting
-            ? "Converting"
-            : `Convert${pendingCount > 0 ? ` (${pendingCount})` : " All"}`}
+          {!outputFolder
+            ? "Pick folder first"
+            : isConverting
+              ? "Converting"
+              : `Convert${pendingCount > 0 ? ` (${pendingCount})` : " All"}`}
         </Button>
       </div>
     </motion.div>
