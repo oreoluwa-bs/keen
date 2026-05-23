@@ -1,6 +1,7 @@
 package img
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/rwcarlsen/goexif/exif"
 	"golang.org/x/image/draw"
 )
 
@@ -35,6 +37,10 @@ func (c *converter) Convert(src io.Reader, dst io.Writer, opts Options) error {
 	srcImg, _, err := image.Decode(src)
 	if err != nil {
 		return fmt.Errorf("decode: %w", err)
+	}
+
+	if opts.Orientation > 1 {
+		srcImg = applyOrientation(srcImg, opts.Orientation)
 	}
 
 	if opts.Width > 0 || opts.Height > 0 {
@@ -167,19 +173,21 @@ func ConvertDir(ctx context.Context, conv Converter, srcDir, dstDir string, opts
 }
 
 func convertFile(conv Converter, srcPath, dstPath string, opts Options) error {
-	src, err := os.Open(srcPath)
+	srcData, err := os.ReadFile(srcPath)
 	if err != nil {
-		return fmt.Errorf("open source %q: %w", srcPath, err)
+		return fmt.Errorf("read %q: %w", srcPath, err)
 	}
-	defer src.Close()
+
+	if !opts.StripExif {
+		opts.Orientation = ReadEXIFOrientation(srcData)
+	}
 
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		return fmt.Errorf("create destination %q: %w", dstPath, err)
 	}
 
-	// Convert using streams
-	err = conv.Convert(src, dst, opts)
+	err = conv.Convert(bytes.NewReader(srcData), dst, opts)
 
 	// Check close error (catches flush/sync failures)
 	if closeErr := dst.Close(); err == nil && closeErr != nil {
@@ -193,6 +201,100 @@ func convertFile(conv Converter, srcPath, dstPath string, opts Options) error {
 	}
 
 	return nil
+}
+
+func ReadEXIFOrientation(data []byte) int {
+	x, err := exif.Decode(bytes.NewReader(data))
+	if err != nil {
+		return 1
+	}
+	tag, err := x.Get(exif.Orientation)
+	if err != nil {
+		return 1
+	}
+	o, err := tag.Int(0)
+	if err != nil || o < 1 || o > 8 {
+		return 1
+	}
+	return o
+}
+
+func applyOrientation(img image.Image, orientation int) image.Image {
+	switch orientation {
+	case 1:
+		return img
+	case 2:
+		return flipH(img)
+	case 3:
+		return rotate180(img)
+	case 4:
+		return flipV(img)
+	case 5:
+		return flipH(rotateCCW(img))
+	case 6:
+		return rotateCW(img)
+	case 7:
+		return flipH(rotateCW(img))
+	case 8:
+		return rotateCCW(img)
+	default:
+		return img
+	}
+}
+
+func flipH(img image.Image) image.Image {
+	b := img.Bounds()
+	dst := image.NewRGBA(b)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			dst.Set(b.Max.X-1-(x-b.Min.X), y, img.At(x, y))
+		}
+	}
+	return dst
+}
+
+func flipV(img image.Image) image.Image {
+	b := img.Bounds()
+	dst := image.NewRGBA(b)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			dst.Set(x, b.Max.Y-1-(y-b.Min.Y), img.At(x, y))
+		}
+	}
+	return dst
+}
+
+func rotate180(img image.Image) image.Image {
+	b := img.Bounds()
+	dst := image.NewRGBA(b)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			dst.Set(b.Max.X-1-(x-b.Min.X), b.Max.Y-1-(y-b.Min.Y), img.At(x, y))
+		}
+	}
+	return dst
+}
+
+func rotateCW(img image.Image) image.Image {
+	b := img.Bounds()
+	dst := image.NewRGBA(image.Rect(0, 0, b.Dy(), b.Dx()))
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			dst.Set(b.Max.Y-1-(y-b.Min.Y), x-b.Min.X, img.At(x, y))
+		}
+	}
+	return dst
+}
+
+func rotateCCW(img image.Image) image.Image {
+	b := img.Bounds()
+	dst := image.NewRGBA(image.Rect(0, 0, b.Dy(), b.Dx()))
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			dst.Set(y-b.Min.Y, b.Max.X-1-(x-b.Min.X), img.At(x, y))
+		}
+	}
+	return dst
 }
 
 func resize(src image.Image, width, height int) image.Image {
