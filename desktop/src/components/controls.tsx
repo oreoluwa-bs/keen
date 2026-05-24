@@ -10,7 +10,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "framer-motion";
-import { useRef, useState } from "react";
+
 import {
   Select,
   SelectContent,
@@ -43,10 +43,6 @@ export function Controls({
   isConverting,
   images,
 }: ControlsProps) {
-  const [selectOpen, setSelectOpen] = useState(false);
-  const selectRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
   const pendingCount = images.filter((i) => i.status === "pending").length;
 
   return (
@@ -65,7 +61,7 @@ export function Controls({
           <SelectContent position="popper">
             <SelectGroup>
               {FORMATS.map((f) => (
-                <SelectItem value={f.value}>{f.label}</SelectItem>
+                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>
