@@ -1,5 +1,4 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { useState } from "react";
 import "./App.css";
 import { Controls } from "./components/controls";
 import { Dropzone } from "./components/dropzone";
@@ -7,6 +6,8 @@ import { ErrorBoundary } from "./components/error-boundary";
 import { Grid } from "./components/grid";
 import { Header } from "./components/header";
 import { useConversion } from "./hooks/use-conversion";
+import { usePersistedState } from "./hooks/use-persisted-state";
+import { useTheme } from "./hooks/use-theme";
 import { useImageState, type Format } from "./lib/images";
 
 function App() {
@@ -18,12 +19,13 @@ function App() {
     updateImageStatus,
     updateImageError,
   } = useImageState();
-  const [format, setFormat] = useState<Format>("webp");
-  const [quality, setQuality] = useState(85);
-  const [width, setWidth] = useState(0);
-  const [height, setHeight] = useState(0);
-  const [stripExif, setStripExif] = useState(false);
-  const [outputFolder, setOutputFolder] = useState<string | null>(null);
+  const { theme, toggleTheme } = useTheme();
+  const [format, setFormat] = usePersistedState<Format>("format", "webp");
+  const [quality, setQuality] = usePersistedState("quality", 85);
+  const [width, setWidth] = usePersistedState("resize-width", 0);
+  const [height, setHeight] = usePersistedState("resize-height", 0);
+  const [stripExif, setStripExif] = usePersistedState("strip-exif", false);
+  const [outputFolder, setOutputFolder] = usePersistedState<string | null>("output-folder", null);
 
   const { handleConvert, isConverting } = useConversion({
     images,
@@ -45,7 +47,7 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="h-dvh flex flex-col overflow-hidden bg-background">
-        <Header images={images} onClearAll={clearAll} />
+        <Header images={images} onClearAll={clearAll} theme={theme} onToggleTheme={toggleTheme} />
         <div className="flex-1 flex flex-col overflow-hidden">
           {images.length === 0 ? (
             <Dropzone onFiles={addImages} hasImages={false} />
