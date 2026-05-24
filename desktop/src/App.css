@@ -164,3 +164,11 @@
         background-position: 100% 0;
     }
 }
+
+@utility scrollbar-thin {
+    scrollbar-width: thin;
+}
+
+@utility scrollbar-thumb-border {
+    scrollbar-color: var(--color-border) transparent;
+}

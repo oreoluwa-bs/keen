@@ -52,6 +52,8 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
     );
   }
 
+  const formats = ["PNG", "JPEG", "WebP", "GIF", "BMP", "TIFF"];
+
   return (
     <div
       {...getRootProps()}
@@ -71,7 +73,7 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
       >
         <HugeiconsIcon
           icon={Upload05Icon}
-          size={16}
+          size={28}
           className="text-muted-foreground shrink-0"
         />
         <div className="flex flex-col items-center gap-1">
@@ -81,6 +83,16 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
           <span className="text-[13px] text-muted-foreground">
             Drop here or click to browse
           </span>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          {formats.map((f) => (
+            <span
+              key={f}
+              className="text-[10px] text-muted-foreground/50 px-1.5 py-0.5 rounded-md border border-border"
+            >
+              {f}
+            </span>
+          ))}
         </div>
       </div>
     </div>
