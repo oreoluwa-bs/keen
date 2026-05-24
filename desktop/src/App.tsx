@@ -6,6 +6,7 @@ import { Dropzone } from "./components/dropzone";
 import { ErrorBoundary } from "./components/error-boundary";
 import { Grid } from "./components/grid";
 import { Header } from "./components/header";
+import { ImagePreview } from "./components/image-preview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ function App() {
   } = useImageState();
   const { theme, toggleTheme } = useTheme();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(-1);
 
   useShortcuts([
     {
@@ -88,7 +90,7 @@ function App() {
           ) : (
             <>
               <Dropzone onFiles={addImages} hasImages={true} />
-              <Grid images={images} onRemove={removeImage} />
+              <Grid images={images} onRemove={removeImage} onPreview={setPreviewIndex} />
             </>
           )}
         </div>
@@ -114,6 +116,13 @@ function App() {
           />
         )}
       </div>
+
+      <ImagePreview
+        images={images}
+        selectedIndex={previewIndex}
+        onClose={() => setPreviewIndex(-1)}
+        onNavigate={setPreviewIndex}
+      />
 
       <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
         <AlertDialogContent>
