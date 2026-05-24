@@ -53,6 +53,14 @@ export function Header({ images, onRequestClear, theme, onToggleTheme }: HeaderP
   const errors = images.filter((i) => i.status === "error").length;
   const hasImages = total > 0;
 
+  const doneImages = images.filter((i) => i.status === "done");
+  const totalOriginal = doneImages.reduce((sum, i) => sum + i.size, 0);
+  const totalOutput = doneImages.reduce(
+    (sum, i) => sum + (i.outputSize ?? i.size),
+    0,
+  );
+  const totalSavings = totalOriginal - totalOutput;
+
   return (
     <header className="flex items-center justify-between px-4 h-12 shrink-0 border-b border-border">
       <div className="flex items-center gap-2.5">
@@ -80,6 +88,11 @@ export function Header({ images, onRequestClear, theme, onToggleTheme }: HeaderP
                 <span className="inline-flex items-center gap-1 text-[12px] tabular-nums text-foreground">
                   <span className="size-1.5 rounded-full bg-foreground/60" />
                   {done} done
+                  {totalSavings > 0 && (
+                    <span className="text-muted-foreground">
+                      (-{Math.round((totalSavings / totalOriginal) * 100)}%)
+                    </span>
+                  )}
                 </span>
               )}
               {errors > 0 && (

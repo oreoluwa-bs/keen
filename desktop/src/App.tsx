@@ -30,6 +30,7 @@ function App() {
     clearAll,
     updateImageStatus,
     updateImageError,
+    updateImageDone,
   } = useImageState();
   const { theme, toggleTheme } = useTheme();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
@@ -66,6 +67,7 @@ function App() {
     outputFolder,
     updateImageStatus,
     updateImageError,
+    updateImageDone,
   });
 
   const handlePickFolder = async () => {

@@ -10,6 +10,7 @@ export interface ImageItem {
   size: number;
   status: ImageStatus;
   error?: string;
+  outputSize?: number;
 }
 
 export type Format =
@@ -75,5 +76,11 @@ export function useImageState() {
     );
   }, []);
 
-  return { images, addImages, removeImage, clearAll, updateImageStatus, updateImageError };
+  const updateImageDone = useCallback((id: string, outputSize: number) => {
+    setImages((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: "done" as const, outputSize } : i))
+    );
+  }, []);
+
+  return { images, addImages, removeImage, clearAll, updateImageStatus, updateImageError, updateImageDone };
 }

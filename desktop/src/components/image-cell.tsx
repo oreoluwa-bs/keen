@@ -126,9 +126,25 @@ export function ImageCell({ item, onRemove, onRetry, index }: ImageCellProps) {
         <p className="text-[12px] text-muted-foreground truncate">
           {item.name}
         </p>
-        <span className="text-[11px] text-muted-foreground/60 tabular-nums">
-          {formatSize(item.size)}
-        </span>
+        {item.outputSize ? (
+          <span className="text-[11px] tabular-nums flex items-center gap-1">
+            <span className="text-muted-foreground/60 line-through">
+              {formatSize(item.size)}
+            </span>
+            <span className="text-foreground/80">
+              {formatSize(item.outputSize)}
+            </span>
+            {item.outputSize < item.size && (
+              <span className="text-[10px] text-foreground/60">
+                -{Math.round((1 - item.outputSize / item.size) * 100)}%
+              </span>
+            )}
+          </span>
+        ) : (
+          <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+            {formatSize(item.size)}
+          </span>
+        )}
       </div>
     </motion.div>
   );

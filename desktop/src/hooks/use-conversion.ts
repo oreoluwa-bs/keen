@@ -12,6 +12,7 @@ interface UseConversionOptions {
   outputFolder: string | null;
   updateImageStatus: (id: string, status: ImageStatus) => void;
   updateImageError: (id: string, error: string) => void;
+  updateImageDone: (id: string, outputSize: number) => void;
 }
 
 export function useConversion({
@@ -24,6 +25,7 @@ export function useConversion({
   outputFolder,
   updateImageStatus,
   updateImageError,
+  updateImageDone,
 }: UseConversionOptions) {
   const [isConverting, setIsConverting] = useState(false);
   const imagesRef = useRef(images);
@@ -69,7 +71,10 @@ export function useConversion({
           args,
         });
 
-        updateImageStatus(image.id, "done");
+        const outputSize = await invoke<number>("get_file_size", {
+          path: outputPath,
+        });
+        updateImageDone(image.id, outputSize);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         updateImageError(image.id, msg);
@@ -77,7 +82,7 @@ export function useConversion({
     }
 
     setIsConverting(false);
-  }, [format, quality, width, height, stripExif, outputFolder, updateImageStatus, updateImageError]);
+  }, [format, quality, width, height, stripExif, outputFolder, updateImageStatus, updateImageError, updateImageDone]);
 
   return { handleConvert, isConverting };
 }
