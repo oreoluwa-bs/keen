@@ -31,7 +31,6 @@ export const FORMATS: { value: Format; label: string }[] = [
 
 export function useImageState() {
   const [images, setImages] = useState<ImageItem[]>([]);
-  const [isConverting, setIsConverting] = useState(false);
   const idCounter = useRef(0);
 
   const addImages = useCallback((files: File[]) => {
@@ -64,5 +63,17 @@ export function useImageState() {
     });
   }, []);
 
-  return { images, setImages, addImages, removeImage, clearAll, isConverting, setIsConverting };
+  const updateImageStatus = useCallback((id: string, status: ImageStatus) => {
+    setImages((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status } : i))
+    );
+  }, []);
+
+  const updateImageError = useCallback((id: string, error: string) => {
+    setImages((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: "error" as const, error } : i))
+    );
+  }, []);
+
+  return { images, addImages, removeImage, clearAll, updateImageStatus, updateImageError };
 }

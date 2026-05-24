@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Upload04Icon } from "@hugeicons/core-free-icons";
+import { Upload05Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -41,7 +41,7 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
       >
         <input {...getInputProps()} />
         <HugeiconsIcon
-          icon={Upload04Icon}
+          icon={Upload05Icon}
           size={16}
           className="text-muted-foreground shrink-0"
         />
@@ -70,7 +70,7 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
         )}
       >
         <HugeiconsIcon
-          icon={Upload04Icon}
+          icon={Upload05Icon}
           size={16}
           className="text-muted-foreground shrink-0"
         />
