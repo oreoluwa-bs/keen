@@ -61,7 +61,9 @@ export function Controls({
           <SelectContent position="popper">
             <SelectGroup>
               {FORMATS.map((f) => (
-                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                <SelectItem key={f.value} value={f.value}>
+                  {f.label}
+                </SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>
