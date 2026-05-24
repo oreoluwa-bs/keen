@@ -20,12 +20,16 @@ function App() {
   } = useImageState();
   const [format, setFormat] = useState<Format>("webp");
   const [quality, setQuality] = useState(85);
+  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
   const [outputFolder, setOutputFolder] = useState<string | null>(null);
 
   const { handleConvert, isConverting } = useConversion({
     images,
     format,
     quality,
+    width,
+    height,
     outputFolder,
     updateImageStatus,
     updateImageError,
@@ -56,6 +60,12 @@ function App() {
             onFormatChange={setFormat}
             quality={quality}
             onQualityChange={setQuality}
+            width={width}
+            height={height}
+            onResizeChange={(w, h) => {
+              setWidth(w);
+              setHeight(h);
+            }}
             outputFolder={outputFolder}
             onPickFolder={handlePickFolder}
             onConvert={handleConvert}

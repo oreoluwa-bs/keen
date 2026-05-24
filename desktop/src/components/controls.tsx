@@ -4,13 +4,16 @@ import { Button } from "@/components/ui/button";
 import { SliderComfortable } from "@/components/ui/slider";
 import { FORMATS, type Format, type ImageItem } from "@/lib/images";
 import {
+  ArrowExpandDiagonalIcon,
   Folder01Icon,
   Loading03Icon,
   Upload05Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import {
   Select,
   SelectContent,
@@ -25,6 +28,9 @@ interface ControlsProps {
   onFormatChange: (f: Format) => void;
   quality: number;
   onQualityChange: (q: number) => void;
+  width: number;
+  height: number;
+  onResizeChange: (w: number, h: number) => void;
   outputFolder: string | null;
   onPickFolder: () => void;
   onConvert: () => void;
@@ -37,13 +43,19 @@ export function Controls({
   onFormatChange,
   quality,
   onQualityChange,
+  width,
+  height,
+  onResizeChange,
   outputFolder,
   onPickFolder,
   onConvert,
   isConverting,
   images,
 }: ControlsProps) {
+  const [open, setOpen] = useState(false);
   const pendingCount = images.filter((i) => i.status === "pending").length;
+
+  const hasResize = width > 0 || height > 0;
 
   return (
     <motion.div
@@ -69,7 +81,7 @@ export function Controls({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center gap-2 flex-1 min-w-0 max-w-50">
+        <div className="flex items-center gap-2 flex-1 min-w-25 max-w-50">
           <SliderComfortable
             value={quality}
             onChange={onQualityChange}
@@ -81,10 +93,92 @@ export function Controls({
           />
         </div>
 
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="group inline-flex items-center gap-1.5 outline-none cursor-pointer text-[13px] h-8 px-3 border border-border bg-transparent transition-all duration-80 rounded-lg focus-visible:ring-1 focus-visible:ring-[#6B97FF]"
+            >
+              <HugeiconsIcon
+                icon={ArrowExpandDiagonalIcon}
+                size={14}
+                className="shrink-0 text-muted-foreground"
+              />
+              <span
+                className={
+                  hasResize ? "text-foreground" : "text-muted-foreground"
+                }
+              >
+                {hasResize
+                  ? `${width > 0 ? width : "Auto"}×${height > 0 ? height : "Auto"}`
+                  : "Original"}
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-56 p-3">
+            <div className="flex flex-col gap-3">
+              <span className="text-[13px] font-medium">Resize</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-[12px] text-muted-foreground w-12 shrink-0">
+                    Width
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={width || ""}
+                    placeholder="Auto"
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      onResizeChange(
+                        Number.isNaN(v) ? 0 : Math.max(0, v),
+                        height,
+                      );
+                    }}
+                    className="flex h-7 w-full rounded-md border border-border bg-transparent px-2 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-[#6B97FF] transition-all duration-80 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[12px] text-muted-foreground w-12 shrink-0">
+                    Height
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={height || ""}
+                    placeholder="Auto"
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      onResizeChange(
+                        width,
+                        Number.isNaN(v) ? 0 : Math.max(0, v),
+                      );
+                    }}
+                    className="flex h-7 w-full rounded-md border border-border bg-transparent px-2 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-[#6B97FF] transition-all duration-80 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </div>
+              </div>
+              {hasResize && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onResizeChange(0, 0);
+                    setOpen(false);
+                  }}
+                  className="text-[12px] text-muted-foreground hover:text-foreground transition-colors duration-80 self-start"
+                >
+                  Reset to original
+                </button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Button
           type="button"
           onClick={onPickFolder}
           variant={"tertiary"}
+          className="text-xs"
           leadingIcon={() => (
             <HugeiconsIcon icon={Folder01Icon} size={16} className="shrink-0" />
           )}
@@ -101,6 +195,7 @@ export function Controls({
           size="md"
           loading={isConverting}
           disabled={isConverting || pendingCount === 0 || !outputFolder}
+          className="text-xs"
           leadingIcon={
             isConverting
               ? () => (

@@ -6,6 +6,8 @@ interface UseConversionOptions {
   images: ImageItem[];
   format: Format;
   quality: number;
+  width: number;
+  height: number;
   outputFolder: string | null;
   updateImageStatus: (id: string, status: ImageStatus) => void;
   updateImageError: (id: string, error: string) => void;
@@ -15,6 +17,8 @@ export function useConversion({
   images,
   format,
   quality,
+  width,
+  height,
   outputFolder,
   updateImageStatus,
   updateImageError,
@@ -45,16 +49,21 @@ export function useConversion({
         const baseName = image.file.name.replace(/\.[^.]+$/, "");
         const outputPath = `${outputFolder}/${baseName}.${format}`;
 
+        const args: string[] = [
+          "convert",
+          inputPath,
+          outputPath,
+          "--format",
+          format,
+          "--quality",
+          String(quality),
+        ];
+
+        if (width > 0) args.push("--width", String(width));
+        if (height > 0) args.push("--height", String(height));
+
         await invoke("run_keen", {
-          args: [
-            "convert",
-            inputPath,
-            outputPath,
-            "--format",
-            format,
-            "--quality",
-            String(quality),
-          ],
+          args,
         });
 
         updateImageStatus(image.id, "done");
@@ -65,7 +74,7 @@ export function useConversion({
     }
 
     setIsConverting(false);
-  }, [format, quality, outputFolder, updateImageStatus, updateImageError]);
+  }, [format, quality, width, height, outputFolder, updateImageStatus, updateImageError]);
 
   return { handleConvert, isConverting };
 }

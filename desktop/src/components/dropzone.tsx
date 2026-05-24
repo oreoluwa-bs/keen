@@ -35,7 +35,7 @@ export function Dropzone({ onFiles, hasImages }: DropzoneProps) {
       <div
         {...getRootProps()}
         className={cn(
-          "relative flex items-center justify-center gap-2 py-2 px-4 cursor-pointer transition-all duration-150 ease-out",
+          "relative flex items-center justify-center gap-2 py-2 px-4 cursor-pointer transition-all duration-150 ease-out hover:bg-accent",
           active && "bg-accent",
         )}
       >
