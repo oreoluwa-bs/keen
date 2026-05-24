@@ -1,6 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Popover,
   PopoverContent,
@@ -18,6 +20,7 @@ import { SliderComfortable } from "@/components/ui/slider";
 import { FORMATS, type Format, type ImageItem } from "@/lib/images";
 import {
   ArrowExpandDiagonalIcon,
+  BadgeInfoIcon,
   Folder01Icon,
   Loading03Icon,
   Upload05Icon,
@@ -34,6 +37,8 @@ interface ControlsProps {
   width: number;
   height: number;
   onResizeChange: (w: number, h: number) => void;
+  stripExif: boolean;
+  onStripExifChange: (v: boolean) => void;
   outputFolder: string | null;
   onPickFolder: () => void;
   onConvert: () => void;
@@ -49,6 +54,8 @@ export function Controls({
   width,
   height,
   onResizeChange,
+  stripExif,
+  onStripExifChange,
   outputFolder,
   onPickFolder,
   onConvert,
@@ -99,6 +106,11 @@ export function Controls({
           onResizeChange={onResizeChange}
         />
 
+        <ExifControls
+          stripExif={stripExif}
+          onStripExifChange={onStripExifChange}
+        />
+
         <Button
           type="button"
           onClick={onPickFolder}
@@ -142,6 +154,59 @@ export function Controls({
         </Button>
       </div>
     </motion.div>
+  );
+}
+
+function ExifControls({
+  stripExif,
+  onStripExifChange,
+}: {
+  stripExif: boolean;
+  onStripExifChange: (v: boolean) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="tertiary"
+          className={cn("text-xs", stripExif && "bg-accent text-foreground")}
+          leadingIcon={() => (
+            <HugeiconsIcon
+              icon={BadgeInfoIcon}
+              size={14}
+              className={cn(
+                "shrink-0",
+                stripExif ? "text-foreground" : "text-muted-foreground"
+              )}
+            />
+          )}
+        >
+          <span
+            className={stripExif ? "text-foreground" : "text-muted-foreground"}
+          >
+            {stripExif ? "Strip Exif" : "Exif"}
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-3">
+        <div className="flex flex-col gap-3">
+          <span className="text-[13px] font-medium">EXIF Metadata</span>
+          <p className="text-[12px] text-muted-foreground leading-relaxed">
+            Camera model, GPS location, and timestamps embedded in images.
+            Stripping also prevents auto-rotation based on EXIF orientation
+            data.
+          </p>
+          <div className="flex items-center justify-between rounded-lg border border-border p-2">
+            <Switch
+              label="Strip EXIF"
+              checked={stripExif}
+              onToggle={() => onStripExifChange(!stripExif)}
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

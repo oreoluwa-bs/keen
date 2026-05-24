@@ -22,6 +22,7 @@ function App() {
   const [quality, setQuality] = useState(85);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
+  const [stripExif, setStripExif] = useState(false);
   const [outputFolder, setOutputFolder] = useState<string | null>(null);
 
   const { handleConvert, isConverting } = useConversion({
@@ -30,6 +31,7 @@ function App() {
     quality,
     width,
     height,
+    stripExif,
     outputFolder,
     updateImageStatus,
     updateImageError,
@@ -66,6 +68,8 @@ function App() {
               setWidth(w);
               setHeight(h);
             }}
+            stripExif={stripExif}
+            onStripExifChange={setStripExif}
             outputFolder={outputFolder}
             onPickFolder={handlePickFolder}
             onConvert={handleConvert}

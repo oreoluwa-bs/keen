@@ -8,6 +8,7 @@ interface UseConversionOptions {
   quality: number;
   width: number;
   height: number;
+  stripExif: boolean;
   outputFolder: string | null;
   updateImageStatus: (id: string, status: ImageStatus) => void;
   updateImageError: (id: string, error: string) => void;
@@ -19,6 +20,7 @@ export function useConversion({
   quality,
   width,
   height,
+  stripExif,
   outputFolder,
   updateImageStatus,
   updateImageError,
@@ -61,6 +63,7 @@ export function useConversion({
 
         if (width > 0) args.push("--width", String(width));
         if (height > 0) args.push("--height", String(height));
+        if (stripExif) args.push("--strip-exif");
 
         await invoke("run_keen", {
           args,
@@ -74,7 +77,7 @@ export function useConversion({
     }
 
     setIsConverting(false);
-  }, [format, quality, width, height, outputFolder, updateImageStatus, updateImageError]);
+  }, [format, quality, width, height, stripExif, outputFolder, updateImageStatus, updateImageError]);
 
   return { handleConvert, isConverting };
 }
