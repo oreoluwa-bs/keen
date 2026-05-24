@@ -7,6 +7,7 @@ import { Grid } from "./components/grid";
 import { Header } from "./components/header";
 import { useConversion } from "./hooks/use-conversion";
 import { usePersistedState } from "./hooks/use-persisted-state";
+import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTheme } from "./hooks/use-theme";
 import { useImageState, type Format } from "./lib/images";
 
@@ -20,6 +21,19 @@ function App() {
     updateImageError,
   } = useImageState();
   const { theme, toggleTheme } = useTheme();
+
+  useShortcuts([
+    {
+      key: "Backspace",
+      handler: clearAll,
+      label: "Clear all images",
+    },
+    {
+      key: "Delete",
+      handler: clearAll,
+      label: "Clear all images",
+    },
+  ]);
   const [format, setFormat] = usePersistedState<Format>("format", "webp");
   const [quality, setQuality] = usePersistedState("quality", 85);
   const [width, setWidth] = usePersistedState("resize-width", 0);

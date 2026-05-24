@@ -1,16 +1,51 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { ImageItem } from "@/lib/images";
-import { Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
+import {
+  HelpCircleIcon,
+  Moon01Icon,
+  Sun01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { Shortcut } from "@/hooks/use-shortcuts";
+
+const BUILTIN_SHORTCUTS: Shortcut[] = [
+  { key: "r", handler: () => {}, label: "Toggle corner radius" },
+  { key: "i", handler: () => {}, label: "Switch icon set" },
+  { key: "Backspace", handler: () => {}, label: "Clear all images" },
+  { key: "Delete", handler: () => {}, label: "Clear all images" },
+];
 
 interface HeaderProps {
   images: ImageItem[];
   onClearAll: () => void;
   theme: "light" | "dark";
   onToggleTheme: () => void;
+}
+
+function formatShortcut(s: Shortcut) {
+  const parts: string[] = [];
+  if (s.modifiers?.meta) parts.push("⌘");
+  if (s.modifiers?.ctrl) parts.push("^");
+  if (s.modifiers?.shift) parts.push("⇧");
+  if (s.modifiers?.alt) parts.push("⌥");
+  const keyLabel =
+    s.key === "Backspace"
+      ? "⌫"
+      : s.key === "Delete"
+        ? "⌦"
+        : s.key === "Escape"
+          ? "⎋"
+          : s.key.toUpperCase();
+  parts.push(keyLabel);
+  return parts.join("");
 }
 
 export function Header({ images, onClearAll, theme, onToggleTheme }: HeaderProps) {
@@ -67,19 +102,53 @@ export function Header({ images, onClearAll, theme, onToggleTheme }: HeaderProps
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center gap-3"
+              className="flex flex-col items-end gap-0.5"
             >
               <span className="text-[11px] text-muted-foreground/60 tracking-wide uppercase">
                 Drop images to convert
+              </span>
+              <span className="text-[10px] text-muted-foreground/40 tracking-wide">
+                R radius · I icons
               </span>
             </motion.div>
           )}
         </AnimatePresence>
 
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors duration-80 outline-none focus-visible:ring-1 focus-visible:ring-[#6B97FF]"
+            >
+              <HugeiconsIcon icon={HelpCircleIcon} size={14} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-56 p-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-medium mb-1">
+                Keyboard Shortcuts
+              </span>
+              {BUILTIN_SHORTCUTS.map((s) => (
+                <div
+                  key={s.key + s.label}
+                  className="flex items-center justify-between gap-4"
+                >
+                  <span className="text-[12px] text-muted-foreground">
+                    {s.label}
+                  </span>
+                  <kbd className="text-[11px] text-foreground font-mono tabular-nums">
+                    {formatShortcut(s)}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <button
           type="button"
           onClick={onToggleTheme}
-          className="ml-2 flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors duration-80 outline-none focus-visible:ring-1 focus-visible:ring-[#6B97FF]"
+          className="flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors duration-80 outline-none focus-visible:ring-1 focus-visible:ring-[#6B97FF]"
         >
           <HugeiconsIcon
             icon={theme === "dark" ? Sun01Icon : Moon01Icon}
