@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  forwardRef,
-  isValidElement,
-  type ButtonHTMLAttributes,
-} from "react";
+import type { IconComponent } from "@/lib/icon-context";
+import { useShape } from "@/lib/shape-context";
+import { cn } from "@/lib/utils";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { IconComponent } from "@/lib/icon-context";
-import { cn } from "@/lib/utils";
-import { useShape } from "@/lib/shape-context";
+import { forwardRef, isValidElement, type ButtonHTMLAttributes } from "react";
 
 const buttonVariants = cva(
   [
@@ -22,7 +18,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "text-background",
+        primary: "text-primary-foreground",
         secondary: "text-foreground",
         tertiary: "border border-border text-foreground",
         ghost: "text-muted-foreground hover:text-foreground",
@@ -50,11 +46,12 @@ const buttonVariants = cva(
       variant: "primary",
       size: "md",
     },
-  }
+  },
 );
 
 interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   /** When true, the given single React-element child becomes the rendered element (slot-style). */
   asChild?: boolean;
@@ -68,14 +65,14 @@ interface ButtonProps
 }
 
 const bgVariants: Record<string, string> = {
-  primary: "bg-foreground group-hover:bg-foreground/90 group-active:bg-foreground/80",
+  primary: "bg-primary group-hover:bg-primary/90 group-active:bg-primary/80",
   secondary: "bg-accent group-hover:bg-accent/80 group-active:bg-accent",
   tertiary: "bg-transparent group-hover:bg-hover group-active:bg-active",
   ghost: "bg-transparent group-hover:bg-hover group-active:bg-active",
 };
 
 const activeBgVariants: Record<string, string> = {
-  primary: "bg-foreground/80",
+  primary: "bg-primary/80",
   secondary: "bg-accent",
   tertiary: "bg-active",
   ghost: "bg-active",
@@ -97,9 +94,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const isIconOnly = size === "icon" || size === "icon-sm" || size === "icon-lg";
+    const isIconOnly =
+      size === "icon" || size === "icon-sm" || size === "icon-lg";
     const iconSize = size === "sm" ? 14 : size === "lg" ? 20 : 16;
     const shape = useShape();
     const bgClass = active
@@ -126,7 +124,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             iconRight: !isIconOnly && !!TrailingIcon,
           }),
           shape.button,
-          className
+          className,
         )}
         disabled={disabled || loading}
         style={style}
@@ -136,7 +134,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           aria-hidden
           className={cn(
             "absolute inset-0 rounded-[inherit] transition-[background-color,transform] duration-80 group-active:scale-[0.98]",
-            bgClass
+            bgClass,
           )}
         />
         <span className="relative inline-flex items-center justify-center gap-[inherit]">
@@ -152,11 +150,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 )}
               </span>
               <span className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  className="h-8 w-8"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
+                <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
                     stroke="currentColor"
@@ -165,7 +159,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     pathLength="100"
                     style={{
                       strokeDasharray: "15 85",
-                      animation: "spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite",
+                      animation:
+                        "spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite",
                     }}
                   />
                 </svg>
@@ -197,7 +192,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         </span>
       </ButtonPrimitive>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

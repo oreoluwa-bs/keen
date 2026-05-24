@@ -17,15 +17,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { Shortcut } from "@/hooks/use-shortcuts";
 
 const BUILTIN_SHORTCUTS: Shortcut[] = [
-  { key: "r", handler: () => {}, label: "Toggle corner radius" },
-  { key: "i", handler: () => {}, label: "Switch icon set" },
   { key: "Backspace", handler: () => {}, label: "Clear all images" },
   { key: "Delete", handler: () => {}, label: "Clear all images" },
 ];
 
 interface HeaderProps {
   images: ImageItem[];
-  onClearAll: () => void;
+  onRequestClear: () => void;
   theme: "light" | "dark";
   onToggleTheme: () => void;
 }
@@ -48,7 +46,7 @@ function formatShortcut(s: Shortcut) {
   return parts.join("");
 }
 
-export function Header({ images, onClearAll, theme, onToggleTheme }: HeaderProps) {
+export function Header({ images, onRequestClear, theme, onToggleTheme }: HeaderProps) {
   const total = images.length;
   const pending = images.filter((i) => i.status === "pending").length;
   const done = images.filter((i) => i.status === "done").length;
@@ -91,7 +89,7 @@ export function Header({ images, onClearAll, theme, onToggleTheme }: HeaderProps
                 </span>
               )}
               <div className="w-px h-4 bg-border mx-1" />
-              <Button variant="ghost" size="sm" onClick={onClearAll}>
+              <Button variant="ghost" size="sm" onClick={onRequestClear}>
                 Clear
               </Button>
             </motion.div>
@@ -106,9 +104,6 @@ export function Header({ images, onClearAll, theme, onToggleTheme }: HeaderProps
             >
               <span className="text-[11px] text-muted-foreground/60 tracking-wide uppercase">
                 Drop images to convert
-              </span>
-              <span className="text-[10px] text-muted-foreground/40 tracking-wide">
-                R radius · I icons
               </span>
             </motion.div>
           )}
