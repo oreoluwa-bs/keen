@@ -15,7 +15,7 @@
         "title": "keen-desktop",
         "width": 800,
         "height": 600,
-        "minWidth": 768,
+        "minWidth": 800,
         "minHeight": 500,
         "dragDropEnabled": false
       }
