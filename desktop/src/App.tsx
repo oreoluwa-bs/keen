@@ -85,6 +85,27 @@ function App() {
           onRequestClear={() => setClearDialogOpen(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
+          format={format}
+          onFormatChange={setFormat}
+          quality={quality}
+          onQualityChange={setQuality}
+          width={width}
+          height={height}
+          onResizeChange={(w, h) => {
+            setWidth(w);
+            setHeight(h);
+          }}
+          presets={presets}
+          onPresetApply={(p) => {
+            setFormat(p.format);
+            setQuality(p.quality);
+            setWidth(p.width);
+            setHeight(p.height);
+            setStripExif(p.stripExif);
+          }}
+          onPresetSave={(name) => {
+            savePreset(name, { format, quality, width, height, stripExif });
+          }}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           {images.length === 0 ? (
@@ -98,29 +119,8 @@ function App() {
         </div>
         {images.length > 0 && (
           <Controls
-            format={format}
-            onFormatChange={setFormat}
-            quality={quality}
-            onQualityChange={setQuality}
-            width={width}
-            height={height}
-            onResizeChange={(w, h) => {
-              setWidth(w);
-              setHeight(h);
-            }}
             stripExif={stripExif}
             onStripExifChange={setStripExif}
-            presets={presets}
-            onPresetApply={(p) => {
-              setFormat(p.format);
-              setQuality(p.quality);
-              setWidth(p.width);
-              setHeight(p.height);
-              setStripExif(p.stripExif);
-            }}
-            onPresetSave={(name) => {
-              savePreset(name, { format, quality, width, height, stripExif });
-            }}
             outputFolder={outputFolder}
             onPickFolder={handlePickFolder}
             onConvert={handleConvert}
