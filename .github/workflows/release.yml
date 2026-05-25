@@ -50,6 +50,9 @@ jobs:
             ./cmd/keen
         env:
           GOARCH: ${{ contains(matrix.target, 'x86_64') && 'amd64' || 'arm64' }}
+      - name: Ad-hoc sign sidecar (macOS)
+        if: runner.os == 'macOS'
+        run: codesign --sign - --force --options runtime "keen-${{ matrix.target }}"
       - uses: pnpm/action-setup@v4
         with:
           version: "9"
@@ -73,15 +76,12 @@ jobs:
       - name: Install pnpm deps
         working-directory: desktop
         run: pnpm install --frozen-lockfile
-      - name: Build frontend
-        working-directory: desktop
-        run: pnpm build
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         with:
           projectPath: desktop
           tagName: ${{ github.ref_name }}
-          releaseName: "v${{ github.ref_name }}"
+          releaseName: "${{ github.ref_name }}"
           releaseBody: "See the assets to download this version and install."
           releaseDraft: false
           prerelease: false

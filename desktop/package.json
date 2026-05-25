@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:sidecar": "../scripts/build-sidecar.sh",
+    "build:sidecar:release": "../scripts/build-sidecar.sh --release",
+    "tauri:build": "pnpm build:sidecar:release && tauri build",
+    "tauri:dev": "pnpm build:sidecar && tauri dev"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
