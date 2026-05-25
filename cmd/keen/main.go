@@ -11,12 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Version = "dev"
+
 func main() {
 	var opts img.Options
 
 	var rootCmd = &cobra.Command{
-		Use:   "keen",
-		Short: "Image converter and compressor",
+		Use:     "keen",
+		Short:   "Image converter and compressor",
+		Version: Version,
 	}
 
 	var convertCmd = &cobra.Command{

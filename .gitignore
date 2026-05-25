@@ -54,3 +54,5 @@ testdata/keen_test*
 /keen
 
 /keen-*
+
+dist/

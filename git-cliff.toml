@@ -1,0 +1,31 @@
+[changelog]
+header = "# Changelog\n"
+body = """
+{%- for group in commits | group_by(attribute="group") %}
+  ### {{ group | upper_first }}
+  {%- for commit in group %}
+    - {{ commit.message | upper_first }}{% if commit.scope %} ({{ commit.scope }}){% endif %}
+  {%- endfor %}
+{% endfor %}
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+commit_parsers = [
+  { message = "^feat", group = "Features" },
+  { message = "^fix", group = "Bug Fixes" },
+  { message = "^perf", group = "Performance" },
+  { message = "^refactor", group = "Refactor" },
+  { message = "^style", group = "Styling" },
+  { message = "^test", group = "Testing" },
+  { message = "^docs", group = "Documentation" },
+  { message = "^ci", group = "CI" },
+  { message = "^chore", group = "Chores" },
+  { message = "^build", group = "Build" },
+]
+filter_commits = false
+tag_pattern = "v[0-9]*"
+sort_tags = true

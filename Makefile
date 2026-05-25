@@ -1,7 +1,8 @@
 .PHONY: build test test/unit test/integration bench lint clean install
 
 BIN       := keen
-LDFLAGS   := -ldflags="-s -w"
+VERSION   := $(shell cat VERSION 2>/dev/null || echo "dev")
+LDFLAGS   := -ldflags="-s -w -X main.Version=$(VERSION)"
 PKG       := github.com/oreoluwa-bs/keen/cmd/keen
 
 build:
