@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "keen-desktop",
+  "productName": "Keen",
   "version": "0.1.0",
   "identifier": "com.oreoluwa.keen-desktop",
   "build": {

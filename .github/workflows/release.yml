@@ -32,7 +32,7 @@ jobs:
         include:
           - os: macos-latest
             target: aarch64-apple-darwin
-          - os: macos-13
+          - os: macos-latest
             target: x86_64-apple-darwin
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -48,6 +48,8 @@ jobs:
             -ldflags="-s -w -X main.Version=${GITHUB_REF_NAME#v}" \
             -o "keen-${{ matrix.target }}" \
             ./cmd/keen
+        env:
+          GOARCH: ${{ contains(matrix.target, 'x86_64') && 'amd64' || 'arm64' }}
       - uses: pnpm/action-setup@v4
         with:
           version: "9"
@@ -56,6 +58,9 @@ jobs:
           node-version: lts/*
           cache: pnpm
           cache-dependency-path: desktop/pnpm-lock.yaml
+      - name: Install Rust targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - name: Install Linux system deps
         if: runner.os == 'Linux'
         run: |
@@ -80,5 +85,6 @@ jobs:
           releaseBody: "See the assets to download this version and install."
           releaseDraft: false
           prerelease: false
+          args: ${{ runner.os == 'macOS' && format('--target {0}', matrix.target) || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
