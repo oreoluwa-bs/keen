@@ -2,6 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import {
   Popover,
@@ -27,7 +34,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { Preset } from "@/hooks/use-presets";
 
 interface ControlsProps {
   format: Format;
@@ -39,6 +47,9 @@ interface ControlsProps {
   onResizeChange: (w: number, h: number) => void;
   stripExif: boolean;
   onStripExifChange: (v: boolean) => void;
+  presets: Preset[];
+  onPresetApply: (preset: Preset) => void;
+  onPresetSave: (name: string) => void;
   outputFolder: string | null;
   onPickFolder: () => void;
   onConvert: () => void;
@@ -56,13 +67,28 @@ export function Controls({
   onResizeChange,
   stripExif,
   onStripExifChange,
+  presets,
+  onPresetApply,
+  onPresetSave,
   outputFolder,
   onPickFolder,
   onConvert,
   isConverting,
   images,
 }: ControlsProps) {
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const pendingCount = images.filter((i) => i.status === "pending").length;
+
+  const activePreset = presets.find(
+    (p) =>
+      p.format === format &&
+      p.quality === quality &&
+      p.width === width &&
+      p.height === height &&
+      p.stripExif === stripExif,
+  );
 
   return (
     <motion.div
@@ -72,6 +98,41 @@ export function Controls({
       className="sticky bottom-0 border-t border-border bg-background/80 backdrop-blur-xl"
     >
       <div className="flex items-center gap-4 px-4 py-3">
+        <Select
+          value={activePreset?.name ?? "__custom__"}
+          onValueChange={(v) => {
+            if (v === "__save__") {
+              setSaveName("");
+              setSaveOpen(true);
+              return;
+            }
+            if (v === "__custom__") return;
+            const preset = presets.find((p) => p.name === v);
+            if (preset) onPresetApply(preset);
+          }}
+        >
+          <SelectTrigger size="sm" className="text-xs rounded-lg min-w-28">
+            <span className="">Preset</span>
+            <SelectValue placeholder="" />
+          </SelectTrigger>
+          <SelectContent position="popper">
+            <SelectGroup>
+              <SelectItem value="__custom__">Custom</SelectItem>
+              {presets.map((p) => (
+                <SelectItem key={p.name} value={p.name}>
+                  {p.name}
+                </SelectItem>
+              ))}
+              <div className="h-px bg-border mx-2 my-1" />
+              <SelectItem value="__save__">
+                <span className="text-muted-foreground">
+                  Save current as preset...
+                </span>
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
         <Select value={format} onValueChange={onFormatChange}>
           <SelectTrigger size="sm" className="text-xs rounded-lg">
             <span className="">Format</span>
@@ -153,6 +214,44 @@ export function Controls({
               : `Convert${pendingCount > 0 ? ` (${pendingCount})` : " All"}`}
         </Button>
       </div>
+
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+        <DialogContent className="w-72" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Save preset</DialogTitle>
+          </DialogHeader>
+          <input
+            ref={inputRef}
+            type="text"
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+            placeholder="e.g. WebP Small"
+            className="flex h-8 w-full rounded-md border border-border bg-transparent px-3 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-[#6B97FF] transition-all duration-80"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && saveName.trim()) {
+                onPresetSave(saveName.trim());
+                setSaveOpen(false);
+              }
+            }}
+          />
+          <DialogFooter>
+            <Button variant="tertiary" onClick={() => setSaveOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!saveName.trim()}
+              onClick={() => {
+                onPresetSave(saveName.trim());
+                setSaveOpen(false);
+              }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

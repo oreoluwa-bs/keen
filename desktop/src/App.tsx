@@ -18,6 +18,7 @@ import {
 } from "./components/ui/alert-dialog";
 import { useConversion } from "./hooks/use-conversion";
 import { usePersistedState } from "./hooks/use-persisted-state";
+import { usePresets } from "./hooks/use-presets";
 import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTheme } from "./hooks/use-theme";
 import { useImageState, type Format } from "./lib/images";
@@ -32,6 +33,7 @@ function App() {
     updateImageError,
     updateImageDone,
   } = useImageState();
+  const { presets, savePreset } = usePresets();
   const { theme, toggleTheme } = useTheme();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
@@ -108,6 +110,17 @@ function App() {
             }}
             stripExif={stripExif}
             onStripExifChange={setStripExif}
+            presets={presets}
+            onPresetApply={(p) => {
+              setFormat(p.format);
+              setQuality(p.quality);
+              setWidth(p.width);
+              setHeight(p.height);
+              setStripExif(p.stripExif);
+            }}
+            onPresetSave={(name) => {
+              savePreset(name, { format, quality, width, height, stripExif });
+            }}
             outputFolder={outputFolder}
             onPickFolder={handlePickFolder}
             onConvert={handleConvert}
