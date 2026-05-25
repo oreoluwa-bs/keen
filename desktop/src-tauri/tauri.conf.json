@@ -13,9 +13,9 @@
     "windows": [
       {
         "title": "keen-desktop",
-        "width": 840,
+        "width": 800,
         "height": 600,
-        "minWidth": 800,
+        "minWidth": 700,
         "minHeight": 500,
         "dragDropEnabled": false
       }

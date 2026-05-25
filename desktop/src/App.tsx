@@ -18,6 +18,7 @@ import {
 } from "./components/ui/alert-dialog";
 import { useConversion } from "./hooks/use-conversion";
 import { usePersistedState } from "./hooks/use-persisted-state";
+import { usePresets } from "./hooks/use-presets";
 import { useShortcuts } from "./hooks/use-shortcuts";
 import { useTheme } from "./hooks/use-theme";
 import { useImageState, type Format } from "./lib/images";
@@ -32,6 +33,7 @@ function App() {
     updateImageError,
     updateImageDone,
   } = useImageState();
+  const { presets, savePreset } = usePresets();
   const { theme, toggleTheme } = useTheme();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
@@ -83,6 +85,27 @@ function App() {
           onRequestClear={() => setClearDialogOpen(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
+          format={format}
+          onFormatChange={setFormat}
+          quality={quality}
+          onQualityChange={setQuality}
+          width={width}
+          height={height}
+          onResizeChange={(w, h) => {
+            setWidth(w);
+            setHeight(h);
+          }}
+          presets={presets}
+          onPresetApply={(p) => {
+            setFormat(p.format);
+            setQuality(p.quality);
+            setWidth(p.width);
+            setHeight(p.height);
+            setStripExif(p.stripExif);
+          }}
+          onPresetSave={(name) => {
+            savePreset(name, { format, quality, width, height, stripExif });
+          }}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           {images.length === 0 ? (
@@ -96,16 +119,6 @@ function App() {
         </div>
         {images.length > 0 && (
           <Controls
-            format={format}
-            onFormatChange={setFormat}
-            quality={quality}
-            onQualityChange={setQuality}
-            width={width}
-            height={height}
-            onResizeChange={(w, h) => {
-              setWidth(w);
-              setHeight(h);
-            }}
             stripExif={stripExif}
             onStripExifChange={setStripExif}
             outputFolder={outputFolder}
