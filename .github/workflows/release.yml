@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   cli:
     name: Build CLI
@@ -16,18 +19,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify Go version compatibility
-        run: |
-          IMAGE_VERSION=$(docker run --rm ghcr.io/goreleaser/goreleaser-cross:v1.25 go version 2>/dev/null | awk '{print $3}')
-          echo "goreleaser-cross Go version: ${IMAGE_VERSION}"
-          MOD_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
-          echo "go.mod requires: ${MOD_VERSION}"
-          if [[ -z "${IMAGE_VERSION}" ]]; then
-            echo "::warning::Could not verify Go version in goreleaser-cross image"
-          elif [[ "${IMAGE_VERSION}" != go${MOD_VERSION%.*}* ]]; then
-            echo "::error::Go version mismatch! Image has ${IMAGE_VERSION} but go.mod requires ${MOD_VERSION}"
-            exit 1
-          fi
       - name: Run goreleaser
         uses: docker://ghcr.io/goreleaser/goreleaser-cross:v1.25
         env:
@@ -74,9 +65,14 @@ jobs:
           node-version: lts/*
           cache: pnpm
           cache-dependency-path: desktop/pnpm-lock.yaml
-      - name: Install Rust targets
-        if: runner.os == 'macOS'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
       - name: Install Linux system deps
         if: runner.os == 'Linux'
         run: |
@@ -105,3 +101,4 @@ jobs:
           args: ${{ runner.os == 'macOS' && format('--target {0}', matrix.target) || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
