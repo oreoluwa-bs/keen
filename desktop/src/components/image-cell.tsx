@@ -12,6 +12,7 @@ interface ImageCellProps {
   item: ImageItem;
   onRemove: (id: string) => void;
   onRetry?: (id: string) => void;
+  onPreview?: () => void;
   index: number;
 }
 
@@ -21,7 +22,7 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function ImageCell({ item, onRemove, onRetry, index }: ImageCellProps) {
+export function ImageCell({ item, onRemove, onRetry, onPreview, index }: ImageCellProps) {
   const [loaded, setLoaded] = useState(false);
 
   const handleRemove = useCallback(() => {
@@ -41,7 +42,10 @@ export function ImageCell({ item, onRemove, onRetry, index }: ImageCellProps) {
       }}
       className="relative group"
     >
-      <div className="relative aspect-square rounded-xl overflow-hidden bg-muted">
+      <div
+        className="relative aspect-square rounded-xl overflow-hidden bg-muted cursor-pointer"
+        onClick={onPreview}
+      >
         {!loaded && (
           <div className="absolute inset-0 bg-muted animate-pulse rounded-xl" />
         )}
